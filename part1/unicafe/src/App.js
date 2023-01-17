@@ -1,14 +1,21 @@
 import { useState } from 'react'
 
+const StatisticLine = (props) => {
+  if (props.text === "Positive")
+    return (<div><p>{props.text} {props.value}%</p></div>)
+  
+  return (<div><p>{props.text} {props.value}</p></div>)
+}
+
 const Statistics = (props) => {
   return (
     <div>
-      <p>Good {props.good}</p>
-      <p>Neutral {props.neutral}</p>
-      <p>Bad {props.bad}</p>
-      <p>All {props.good + props.neutral + props.bad}</p>
-      <p>Average {(props.good - props.bad) / (props.good + props.neutral + props.bad)}</p>
-      <p>Positive {(props.good / (props.good + props.neutral + props.bad)) * 100}%</p>
+      <StatisticLine text="Good" value ={props.good} />
+      <StatisticLine text="Neutral" value ={props.neutral}/>
+      <StatisticLine text="Bad" value ={props.bad} />
+      <StatisticLine text="All" value ={props.good + props.neutral + props.bad} />
+      <StatisticLine text="Average" value ={(props.good - props.bad) / (props.good + props.neutral + props.bad)} />
+      <StatisticLine text="Positive" value ={(props.good / (props.good + props.neutral + props.bad)) * 100}/>
     </div>
   )
 }
