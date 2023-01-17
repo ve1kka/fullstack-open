@@ -13,17 +13,23 @@ const App = () => {
   ]
    
   const [selected, setSelected] = useState(0)
+  const [highest, setHighest] = useState(0)
 
   const [points, setPoints] = useState(new Array(8).fill(0))
+
 
   const addPoint = () => {
     const copy = [...points]
     copy[selected] += 1
+    if (copy[selected] > copy[highest])
+      setHighest(selected)
+
     setPoints(copy)
   }
 
   return (
     <div>
+      <h1>Anecdote of the day</h1>
       {anecdotes[selected]}
       <p>
         Has {points[selected]} points
@@ -32,6 +38,9 @@ const App = () => {
         <button onClick={addPoint}>Vote</button>
         <button onClick={() => {setSelected(Math.floor(Math.random()*anecdotes.length))}}>Next anecdote</button>
       </p>
+      <h1>Anecdote with the most votes</h1>
+      <p>{anecdotes[highest]}</p>
+      <p>Has {points[highest]} points</p>
     </div>
   )
 }
