@@ -2,10 +2,15 @@ import { useState } from 'react'
 
 const App = () => {
   const [persons, setPersons] = useState([
-    { id: 0, name: 'Arto Hellas',  phonenumber: "040-1234567" }
+    { id: 0, name: 'Arto Hellas',  phonenumber: "040-1234567" },
+    { id: 1, name: 'Ada Lovelace', phonenumber: '39-44-5323523' },
+    { id: 2, name: 'Dan Abramov', phonenumber: '12-43-234345' },
+    { id: 3, name: 'Mary Poppendieck', phonenumber: '39-23-6423122' }
   ]) 
+
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
+  const [newFilter, setNewFilter] = useState('')
 
   const handleNameChange = (event) => {
     setNewName(event.target.value)
@@ -13,6 +18,10 @@ const App = () => {
 
   const handlePhonenumberChange = (event) => {
     setNewNum(event.target.value)
+  }
+
+  const handleFilterChange = (event) => {
+    setNewFilter(event.target.value)
   }
 
   const handleSubmit = (event) => {
@@ -34,6 +43,10 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <div>
+        filter: <input value={newFilter} onChange={handleFilterChange} />
+      </div>
+      <h2>Add new number</h2>
       <form onSubmit={handleSubmit}>
         <div>
           name: <input value={newName} onChange={handleNameChange} />
@@ -46,12 +59,17 @@ const App = () => {
         </div>
       </form>
       <h2>Numbers</h2>
-      {persons.map((p) => (
-        <p key={p.id}>{p.name} {p.phonenumber}</p> 
-      ))}
+
+      {newFilter
+        ? persons.filter((p) => p.name.includes(newFilter))
+                 .map((p) => (
+                  <p key={p.id}>{p.name} {p.phonenumber}</p>
+                 ))
+        : persons.map((p) => (
+            <p key={p.id}>{p.name} {p.phonenumber}</p> 
+          ))}
     </div>
   )
-
 }
 
 export default App
