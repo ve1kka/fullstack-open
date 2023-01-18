@@ -1,19 +1,21 @@
-import { useState } from 'react'
+import axios from 'axios'
+import { useState, useEffect } from 'react'
 import Filter from './Filter'
 import Personform from './Personform'
 import Persons from './Persons'
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { id: 0, name: 'Arto Hellas',  phonenumber: "040-1234567" },
-    { id: 1, name: 'Ada Lovelace', phonenumber: '39-44-5323523' },
-    { id: 2, name: 'Dan Abramov', phonenumber: '12-43-234345' },
-    { id: 3, name: 'Mary Poppendieck', phonenumber: '39-23-6423122' }
-  ]) 
-
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [newFilter, setNewFilter] = useState('')
+  const [persons, setPersons] = useState([]) 
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3001/persons")
+      .then((response) => {setPersons(response.data)})
+  }, [])
+
 
   const handleNameChange = (event) => {
     setNewName(event.target.value)
@@ -32,7 +34,7 @@ const App = () => {
     const person = {
       name: newName,
       id: persons.length,
-      phonenumber: newNum,
+      number: newNum,
     }
     if (persons.map(p => p.name).includes(newName))
       alert(`${newName} is already added to phonebook`)

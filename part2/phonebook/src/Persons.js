@@ -4,10 +4,10 @@ const Persons = ({newFilter, persons}) => {
         {newFilter
             ? persons.filter((p) => p.name.includes(newFilter))
                      .map((p) => (
-                      <p key={p.id}>{p.name} {p.phonenumber}</p>
+                      <p key={p.id}>{p.name} {p.number}</p>
                      ))
             : persons.map((p) => (
-                <p key={p.id}>{p.name} {p.phonenumber}</p> 
+                <p key={p.id}>{p.name} {p.number}</p> 
               ))}
         </>
     )
