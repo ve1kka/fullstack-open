@@ -32,20 +32,20 @@ const App = () => {
   const addPerson = (person) => {
     personService
       .create(person)
-      .then(response => {
+      .then(_response => {
         setPersons(persons.concat(person))
       })
   }
 
   const updatePerson = (name, newNum) => {
-    const oldPerson = persons.find(p => p.name === newName)
+    const oldPerson = persons.find(p => p.name === name)
     const changedPerson = { ...oldPerson, number: newNum }
 
     personService
       .update(oldPerson.id, changedPerson).then(returnedPerson => {
         setPersons(persons.map(person => person.id !== oldPerson.id ? person : returnedPerson))
       })
-      .catch(error => {
+      .catch(_error => {
         alert(
           `the note '${oldPerson.content}' was already deleted from the server`
         )
