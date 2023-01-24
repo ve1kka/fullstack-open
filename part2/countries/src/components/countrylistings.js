@@ -1,5 +1,5 @@
-import Country from "./country";
-const Countrylistings = ({ toShow, countries, filter }) => {
+import Country from "./country"
+const Countrylistings = ({ toShow, countries, filter, pressedCountry }) => {
   return(
     <>
       {toShow.length === 1 ? (
@@ -14,7 +14,12 @@ const Countrylistings = ({ toShow, countries, filter }) => {
       }
       </>
       ) : toShow.length < 10 || !filter ? (
-      toShow
+        pressedCountry ? (
+          <>
+          {toShow}
+          <Country country={pressedCountry} />
+          </>
+        ) : toShow
       ) : (
       "Too many matches, specify another filter"
       )}
