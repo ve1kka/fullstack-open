@@ -87,7 +87,7 @@ const App = () => {
     event.preventDefault()
     const person = {
       name: newName,
-      id: (new Date()).getTime(),
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
       number: newNum,
     }
 
