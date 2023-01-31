@@ -18,8 +18,9 @@ const App = () => {
   useEffect(() => {
     personService
       .getAll()
-      .then((initialPersons) => {setPersons(initialPersons)})
+      .then((initialPersons) => {setPersons(initialPersons); console.log(initialPersons)})
   }, [])
+
 
 
   const handleNameChange = (event) => {
@@ -49,9 +50,12 @@ const App = () => {
   const addPerson = (person) => {
     personService
       .create(person)
-      .then(_response => {
-        setPersons(persons.concat(person))
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
         createNotification(person.name, 'notification', 'Added ')
+      })
+      .catch(error => {
+        createNotification(person.name, 'warning', error.response.data.error)
       })
   }
 
@@ -64,8 +68,8 @@ const App = () => {
         setPersons(persons.map(person => person.id !== oldPerson.id ? person : returnedPerson))
         createNotification(oldPerson.name, 'notification', 'Updated ')
       })
-      .catch(_error => {
-        createNotification(oldPerson.name, 'warning', 'This person was already deleted from the phonebook: ')
+      .catch(error => {
+        createNotification(oldPerson.name, 'warning', error.response.data.error)
       })
   }
 
@@ -76,10 +80,10 @@ const App = () => {
           const updated = persons.filter(p => p.id !== id)
           setPersons(updated)
           createNotification(delPerson.name, 'notification', 'Successfully deleted ')
-      })
-      .catch(_error => {
-        createNotification(delPerson.name, 'warning', 'Person already deleted from the phonebook')
-      })
+        })
+          .catch(error => {
+            createNotification(delPerson.name, 'warning', error.response.data.error)
+          })
     }
   }
 
@@ -87,7 +91,6 @@ const App = () => {
     event.preventDefault()
     const person = {
       name: newName,
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
       number: newNum,
     }
 
