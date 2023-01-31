@@ -1,3 +1,5 @@
+import Weather from "./weather"
+
 const Country = ({country}) => {
   return (
     <div key={country.numericCode}>
@@ -8,15 +10,17 @@ const Country = ({country}) => {
         <p>Area {country.area}</p>
         <p>Population {country.population}</p>
         <ul>
-        {Object.values(country.languages).map((k, v) => (
-            <li key={v}>{k}</li>
-        ))}
+          {Object.values(country.languages).map((k, v) => (
+              <li key={v}>{k}</li>
+          ))}
         </ul>
         <img
-        style={{ width: "20%" }}
-        src={country.flags.png}
-        alt={country.name.common}
+          style={{ width: "20%" }}
+          src={country.flags.png}
+          alt={country.name.common}
         />
+
+        <Weather city={country.capital}/>
       </>
       }
     </div>
