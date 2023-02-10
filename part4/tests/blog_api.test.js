@@ -1,10 +1,34 @@
 const supertest = require('supertest')
 const mongoose = require('mongoose')
-const helper = require('./blog_api_testhelper')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const helper = require('./api_testhelper')
 const app = require('../app')
 const api = supertest(app)
 
 const Blog = require('../models/blog')
+const User = require('../models/user')
+
+var token = null
+var testUserId = null
+
+beforeAll(async () => {
+  await User.deleteMany({})
+  const testUser = await new User({
+    username: 'aaaa',
+    passwordHash: await bcrypt.hash('password', 10),
+  }).save()
+
+  await api.post('/api/login').send({ username: 'aaaa', password: 'password' })
+
+  token = jwt.sign(
+    { username: 'aaaa', id: testUser.id },
+    process.env.SECRET,
+    { expiresIn: 60*60 }
+  )
+
+  testUserId = testUser.id
+})
 
 beforeEach(async () => {
   await Blog.deleteMany({})
@@ -79,12 +103,14 @@ describe('POST requests', () => {
       author: 'Aaa',
       url: 'blog.net',
       likes: 1,
+      user: testUserId,
     }
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
-      .expect(200)
+      .expect(201)
       .expect('Content-Type', /application\/json/)
 
 
@@ -102,39 +128,20 @@ describe('POST requests', () => {
       title: 'titteli',
       author: 'tekija',
       url: 'aa.fi',
+      user: testUserId,
     }
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
-      .expect(200)
+      .expect(201)
       .expect('Content-Type', /application\/json/)
 
     const finalBlogs = await helper.blogsInDb()
     const likesOfAdded = finalBlogs[finalBlogs.length - 1].likes
 
     expect(likesOfAdded).toBe(0)
-  })
-
-  test('blog can be updated', async () => {
-    const newBlog = {
-      title: 'Blog',
-      author: 'Bart',
-      url: 'blog.net',
-      likes: 69,
-    }
-
-    const initialBlogs = await helper.blogsInDb()
-    const blogToUpdate = initialBlogs[0]
-
-    await api.put(`/api/blogs/${blogToUpdate.id}`).send(newBlog).expect(200)
-
-    const blogsAfterUpdate = await helper.blogsInDb()
-    const updatedBlog = blogsAfterUpdate[0]
-
-    expect(blogsAfterUpdate).toHaveLength(helper.initialBlogs.length)
-    expect(updatedBlog.likes).toBe(69)
-    expect(updatedBlog.author).toBe('Bart')
   })
 })
 
@@ -145,6 +152,7 @@ describe('improperly formatted POST requests', () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(400)
 
@@ -157,9 +165,13 @@ describe('improperly formatted POST requests', () => {
       title: 'aba',
       author: 'aaa',
       likes: 1,
+      user: testUserId,
     }
 
-    await api.post('/api/blogs').send(newBlog).expect(400)
+    await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog).expect(400)
   })
 
   test('blog without title is not added', async () => {
@@ -167,25 +179,101 @@ describe('improperly formatted POST requests', () => {
       author: 'abaa',
       url: 'aaa',
       likes: 1,
+      user: testUserId,
     }
 
-    await api.post('/api/blogs').send(newBlog).expect(400)
+    await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog).expect(400)
+  })
+
+  test('blog without token is not added', async () => {
+    const newBlog = {
+      title: 'aba',
+      author: 'aaa',
+      likes: 1,
+      user: testUserId,
+    }
+
+    await api
+      .post('/api/blogs')
+      .set('Authorization', 'aa')
+      .send(newBlog).expect(401)
   })
 })
 
-describe('DELETE requests', () => {
+describe('delete and update requests', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+
+    const newBlog = {
+      title: 'ababa',
+      author: 'aba aa',
+      url: 'abaaaa',
+      user: testUserId,
+    }
+
+    await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog)
+      .expect(201)
+
+    return token
+  })
+
   test('a blog can be deleted', async () => {
     const initialBlogs = await helper.blogsInDb()
     const blogToDelete = initialBlogs[0]
 
-    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204)
+
     const finalBlogs = await helper.blogsInDb()
 
-    expect(finalBlogs).toHaveLength(helper.initialBlogs.length - 1)
+    expect(finalBlogs).toHaveLength(0)
 
     const contents = finalBlogs.map((r) => r.title)
 
     expect(contents).not.toContain(blogToDelete.title)
+  })
+
+  test('deleting nonexistent blog', async () => {
+    const initialBlogs = await helper.blogsInDb()
+
+    await api
+      .delete('/api/blogs/ababababa')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400)
+
+    const finalBlogs = await helper.blogsInDb()
+
+    expect(initialBlogs).toEqual(finalBlogs)
+  })
+
+  test('blog can be updated', async () => {
+    const newBlog = {
+      title: 'Blog',
+      author: 'Bart',
+      url: 'blog.net',
+      likes: 69,
+      user: testUserId,
+    }
+
+    const initialBlogs = await helper.blogsInDb()
+    const blogToUpdate = initialBlogs[0]
+
+    await api.put(`/api/blogs/${blogToUpdate.id}`).send(newBlog).expect(200)
+
+    const blogsAfterUpdate = await helper.blogsInDb()
+    const updatedBlog = blogsAfterUpdate[0]
+
+    expect(blogsAfterUpdate).toHaveLength(1)
+    expect(updatedBlog.likes).toBe(69)
+    expect(updatedBlog.author).toBe('Bart')
   })
 })
 
