@@ -1,4 +1,12 @@
 import { useState } from 'react'
+import { useField } from './hooks'
+import { 
+  Routes,
+  Route,
+  Link,
+  useMatch,
+  useNavigate 
+} from 'react-router-dom'
 
 const Menu = () => {
   const padding = {
@@ -6,9 +14,9 @@ const Menu = () => {
   }
   return (
     <div>
-      <a href='#' style={padding}>anecdotes</a>
-      <a href='#' style={padding}>create new</a>
-      <a href='#' style={padding}>about</a>
+      <Link to={'/anecdotes'} style={padding}>anecdotes</Link>
+      <Link to={'/create'} style={padding}>create new</Link>
+      <Link to={'/about'} style={padding}>about</Link>
     </div>
   )
 }
@@ -17,10 +25,23 @@ const AnecdoteList = ({ anecdotes }) => (
   <div>
     <h2>Anecdotes</h2>
     <ul>
-      {anecdotes.map(anecdote => <li key={anecdote.id} >{anecdote.content}</li>)}
+      {anecdotes.map(anecdote => 
+        <li key={anecdote.id}>
+          <Link key={anecdote.id} to={`/anecdotes/${anecdote.id}`} >{anecdote.content}</Link>
+        </li>)}
     </ul>
   </div>
 )
+
+const Anecdote = ({ anecdote }) => (
+  <div>
+    <h2>{anecdote.content}</h2>
+    <p>author: {anecdote.author}</p>
+    <p>votes: {anecdote.votes}</p>
+    <p>info: {anecdote.info}</p>
+  </div>
+)
+
 
 const About = () => (
   <div>
@@ -45,19 +66,27 @@ const Footer = () => (
 )
 
 const CreateNew = (props) => {
-  const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('')
-  const [info, setInfo] = useState('')
-
+  const content = useField('content')
+  const author = useField('author')
+  const info = useField('info')
+  const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
     props.addNew({
-      content,
-      author,
-      info,
+      content: content.value,
+      author: author.value,
+      info: info.value,
       votes: 0
     })
+    navigate('/anecdotes')
+  }
+
+  const handleReset = (e) => {
+    e.preventDefault()
+    content.onReset()
+    author.onReset()
+    info.onReset()
   }
 
   return (
@@ -66,17 +95,18 @@ const CreateNew = (props) => {
       <form onSubmit={handleSubmit}>
         <div>
           content
-          <input name='content' value={content} onChange={(e) => setContent(e.target.value)} />
+          <input {...content} />
         </div>
         <div>
           author
-          <input name='author' value={author} onChange={(e) => setAuthor(e.target.value)} />
+          <input {...author} />
         </div>
         <div>
           url for more info
-          <input name='info' value={info} onChange={(e)=> setInfo(e.target.value)} />
+          <input {...info} />
         </div>
         <button>create</button>
+        <button onClick={handleReset}>reset</button>
       </form>
     </div>
   )
@@ -106,6 +136,8 @@ const App = () => {
   const addNew = (anecdote) => {
     anecdote.id = Math.round(Math.random() * 10000)
     setAnecdotes(anecdotes.concat(anecdote))
+    setNotification(`a new anecdote ${anecdote.content} created!`)
+    setTimeout(() => setNotification(null), 5000)
   }
 
   const anecdoteById = (id) =>
@@ -122,13 +154,23 @@ const App = () => {
     setAnecdotes(anecdotes.map(a => a.id === id ? voted : a))
   }
 
+  const match = useMatch('/anecdotes/:id')
+  const anecdote = match 
+    ? anecdotes.find(anecdote => anecdote.id === Number(match.params.id))
+    : null 
+
   return (
     <div>
       <h1>Software anecdotes</h1>
+      {notification ? <p>{notification}</p> : null}
       <Menu />
-      <AnecdoteList anecdotes={anecdotes} />
-      <About />
-      <CreateNew addNew={addNew} />
+      <Routes>
+        <Route path='/anecdotes/:id' element={<Anecdote anecdote={anecdote}/>}/>
+        <Route path='/anecdotes' element={<AnecdoteList anecdotes={anecdotes} />}/>
+        <Route path='/create' element={<CreateNew addNew={addNew} />}/>
+        <Route path='/about' element={<About />}/>
+        <Route path='/' element={<AnecdoteList anecdotes={anecdotes} />}/>
+      </Routes>
       <Footer />
     </div>
   )
